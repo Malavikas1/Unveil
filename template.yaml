@@ -13,18 +13,6 @@ Resources:
         Type: AllAtOnce
         Role: !GetAtt CodeDeployRole.Arn
 
-  CodeDeployApplication:
-    Type: AWS::CodeDeploy::Application
-    Properties:
-      ComputePlatform: Lambda
-
-  CodeDeployDeploymentGroup:
-    Type: AWS::CodeDeploy::DeploymentGroup
-    Properties:
-      ApplicationName: !Ref CodeDeployApplication
-      DeploymentGroupName: MyDeploymentGroup
-      ServiceRoleArn: !GetAtt CodeDeployRole.Arn
-
   CodeDeployRole:
     Type: AWS::IAM::Role
     Properties:
