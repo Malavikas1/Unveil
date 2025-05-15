@@ -3,20 +3,25 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 14
+      nodejs: 18
     commands:
-      - echo "Installing SAM CLI..."
+      - echo Installing SAM CLI...
       - pip install aws-sam-cli
   pre_build:
     commands:
-      - echo "Installing dependencies..."
+      - echo Installing dependencies...
       - npm install
   build:
     commands:
-      - echo "Building Lambda function..."
+      - echo Build started on `date`
+      - echo Building the Lambda function...
       - sam build
-      - echo "Packaging for deployment..."
-      - sam package --output-template-file outputTemplate.yaml --s3-bucket my-lambda-artifacts
+      - echo Packaging for deployment...
+      - sam package --output-template-file outputTemplate.yaml --s3-bucket $S3_BUCKET
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Packaging completed, output template ready for deployment...
 artifacts:
   files:
     - outputTemplate.yaml
