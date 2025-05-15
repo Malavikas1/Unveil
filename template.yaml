@@ -12,6 +12,26 @@ Resources:
       DeploymentPreference:
         Type: AllAtOnce
         Role: !GetAtt CodeDeployRole.Arn
+      Events:
+        ApiEvent:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: GET
+            RestApiId: !Ref MyApi
+      MemorySize: 512 # Adjust if needed for Express
+      Timeout: 30 # Increase for Express apps
+
+  MyApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: prod
+      Cors:
+        AllowMethods: "'GET,POST,OPTIONS'"
+        AllowHeaders: "'Content-Type'"
+        AllowOrigin: "'*'"
+      Auth:
+        DefaultAuthorizer: NONE
 
   CodeDeployRole:
     Type: AWS::IAM::Role
