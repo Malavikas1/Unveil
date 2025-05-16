@@ -19,8 +19,11 @@ Resources:
             Path: /hello
             Method: GET
             RestApiId: !Ref MyApi
-      MemorySize: 512 # Adjust if needed for Express
-      Timeout: 30 # Increase for Express apps
+      MemorySize: 512
+      Timeout: 30
+      Environment:
+        Variables:
+          NODE_ENV: production
 
   MyApi:
     Type: AWS::Serverless::Api
