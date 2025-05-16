@@ -13,14 +13,20 @@ Resources:
         Type: AllAtOnce
         Role: !GetAtt CodeDeployRole.Arn
       Events:
-        ApiEvent:
+        ApiGetEvent:
           Type: Api
           Properties:
             Path: /hello
             Method: GET
             RestApiId: !Ref MyApi
+        ApiOptionsEvent:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: OPTIONS
+            RestApiId: !Ref MyApi
       MemorySize: 512
-      Timeout: 30
+      Timeout: 60
       Environment:
         Variables:
           NODE_ENV: production
@@ -31,10 +37,14 @@ Resources:
       StageName: prod
       Cors:
         AllowMethods: "'GET,POST,OPTIONS'"
-        AllowHeaders: "'Content-Type'"
+        AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key'"
         AllowOrigin: "'*'"
+        MaxAge: "'3600'"
       Auth:
         DefaultAuthorizer: NONE
+      AccessLogSetting:
+        DestinationArn: !Sub arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/apigateway/MyApi
+        Format: '{ "requestId": "$context.requestId", "ip": "$context.identity.sourceIp", "path": "$context.path", "status": "$context.status" }'
 
   CodeDeployRole:
     Type: AWS::IAM::Role
