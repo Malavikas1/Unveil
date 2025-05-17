@@ -1,32 +1,26 @@
 version: 0.2
-
 phases:
-  install:
-    runtime-versions:
-      nodejs: 18
-    commands:
-      - echo Installing SAM CLI...
-      - pip install aws-sam-cli==1.120.0
   pre_build:
     commands:
-      - echo Installing dependencies...
-      - npm install || echo "No package.json found, skipping npm install"
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - echo Logging in to Docker Hub...
+      - DOCKERHUB_CREDS=$(aws secretsmanager get-secret-value --secret-id Dockerhub-credentials-app --query SecretString --output text)
+      - DOCKERHUB_USERNAME=$(echo $DOCKERHUB_CREDS | jq -r .DOCKERHUB_USERNAME)
+      - DOCKERHUB_PASSWORD=$(echo $DOCKERHUB_CREDS | jq -r .DOCKERHUB_PASSWORD)
+      - echo $DOCKERHUB_PASSWORD | docker login --username $DOCKERHUB_USERNAME --password-stdin
   build:
     commands:
       - echo Build started on `date`
-      - echo Current directory is $(pwd)
-      - ls -la
-      - echo Building the Lambda function...
-      - sam build
-      - echo Listing build artifacts...
-      - ls -la .aws-sam/build/
-      - echo Packaging for deployment...
-      - echo S3_BUCKET is $S3_BUCKET
-      - sam package --output-template-file outputTemplate.yaml --s3-bucket $S3_BUCKET
+      - echo Building the Docker image...
+      - docker build -t $IMAGE_REPO_NAME:$IMAGE_TAG .
+      - docker tag $IMAGE_REPO_NAME:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
   post_build:
     commands:
       - echo Build completed on `date`
-      - echo Packaging completed, output template ready for deployment...
+      - echo Pushing the Docker image...
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG
+      - printf '[{"name":"unveil","imageUri":"%s"}]' $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME:$IMAGE_TAG > imagedefinitions.json
 artifacts:
   files:
-    - outputTemplate.yaml
+    - imagedefinitions.json
